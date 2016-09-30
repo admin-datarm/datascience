@@ -2,7 +2,7 @@
 Tidy Dataset of Human Activity Recognition Using Smartphones Dataset
 Version 1.0
 ==================================================================
-Zhao Migli
+Zhao Mingli
 ==================================================================
 
 This is a work for Coursera assignment.
