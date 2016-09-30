@@ -20,7 +20,7 @@ names(allset) <- c(features[,2],"activity_no","subject")
 
 #2. Extracts only the measurements on the mean and standard deviation for each measurement.
 #(2.1) compute indice of columns only contains mean and std .
-meanstd_indice <- grep("(.*mean.*|.*std.*|activity_no|subject)", names(allset))
+meanstd_indice <- grep("((.*(mean|std)\\(\\).*)|activity_no|subject)", names(allset))
 #(2.2) Filter the dataset given indice.
 meanstd_dataset <- allset[,meanstd_indice]
 
@@ -36,7 +36,7 @@ tidy_dataset <- merge(x=meanstd_dataset,y=activitylables,by.x="activity_no",by.y
 tidy_dataset <- select(tidy_dataset,-activity_no)
 
 #5. From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
-mean_dataset <- tidy_dataset %>% group_by(activity_label,subject) %>% summarise_each(funs(mean))
+mean_dataset <- tidy_dataset %>% group_by(subject,activity_label) %>% summarise_each(funs(mean))
 #Write tidy_dataset
 write.table(mean_dataset, file = "../tidydataset/mean_dataset.csv",row.name=FALSE)
 

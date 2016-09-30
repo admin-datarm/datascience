@@ -21,6 +21,14 @@ The script submitted achieve flowing tidy tasks:
 
 - Calculate the mean value of each variables grouped by activity and subject variables by using R function group_by and summarise_each.
 
+Contents:
+======
+This repository files below are :
+- README.md, readme file 
+- mean_dataset.csv, tidy dataset file
+- run_analysis.R, R script generated the dataset.
+- CodeBook.md , the codebook file.
+
 
 Notes: 
 ======
