@@ -1,0 +1,7 @@
+name: Publish Document
+account: rpubs
+server: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/222931/4026fd146cfc45cb98e8c345696a97c6
+bundleId: https://api.rpubs.com/api/v1/document/222931/4026fd146cfc45cb98e8c345696a97c6
+url: http://rpubs.com/zhaomingli_datas/222931
+when: 1477856172.94851

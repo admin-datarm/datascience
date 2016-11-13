@@ -1,5 +1,6 @@
 ## Plot 2, Anwsering questions : have total emissions from PM2.5 decreased in the Baltimore City, Maryland  from 1999 to 2008? Use the base plotting system to make a plot answering this question.
-
+library(ggplot2)
+library(dplyr)
 #1. load dataset.
 sccpm25 <- readRDS(file ="../airpollution_courseproject2/summarySCC_PM25.rds")
 

@@ -1,0 +1,117 @@
+---
+title: "United States weather events analysis report"
+author: "Zhao Mingli"
+date: "October 29, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,cache = FALSE,message = FALSE)
+```
+
+## Introduction of this data analysis.
+This report explores the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database and answers two questions below: 
+
+1. Across the United States, which types of events are most harmful with respect to population health? 
+2. Across the United States, which types of events have the greatest economic consequences? 
+
+## Data processing
+The data processing are stressed in following steps:  
+
+1. Get the raw csv and load the data into dataframe named *stormData*
+```{r dataprocessing}
+library(dplyr)
+library(ggplot2)
+
+if(!file.exists("storm_data.csv.bz2")){
+        download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2",destfile = "storm_data.csv.bz2")
+        
+}
+# Read data as a dataframe
+stormDataRaw <- read.csv(file = "storm_data.csv.bz2",stringsAsFactors = FALSE)
+dim(stormDataRaw)
+stormData <- stormDataRaw %>% select(EVTYPE,INJURIES,FATALITIES,PROPDMG,CROPDMG)
+str(stormData)
+```
+2. Compute the injuries and fatalities
+```{r}
+# Compute the injuries
+stormDataByEVType <- stormData %>% group_by(EVTYPE)
+topInjuries <- stormDataByEVType %>% summarise(mean_injuries=mean(INJURIES)) %>% arrange(desc(mean_injuries))
+# Compute the fatalities
+topFatalities <- stormDataByEVType %>% summarise(mean_fatalities=mean(FATALITIES)) %>% arrange(desc(mean_fatalities))
+```
+3. Compute the economic consequences 
+```{r}
+# summarize property damages
+topPropDmg <- stormDataByEVType %>% summarise(sum_propDmg=sum(PROPDMG)) %>% arrange(desc(sum_propDmg))
+# summarize crop damages
+topCropDmg <- stormDataByEVType %>% summarise(sum_cropDmg=sum(CROPDMG)) %>% arrange(desc(sum_cropDmg))
+
+```
+
+## Results
+```{r,echo = FALSE}
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+```
+**Heat wave** is the most harmful event to human's health in terms of injuries and Tornadoes,TSTM wind and Hail are the fata events in terms of fatalities. More events that causes injuries or fatalness are listed below:  
+
+```{r}
+p1 <- ggplot(head(topInjuries,n=3),aes(x=reorder(EVTYPE,-mean_injuries),y=mean_injuries)) + geom_bar(stat = "identity") + ggtitle("Top 3 injuries across years in the U.S.") + labs(x="Events",y="Mean injuries")
+p2 <- ggplot(head(topFatalities,n=3),aes(x=reorder(EVTYPE,-mean_fatalities),y=mean_fatalities)) + geom_bar(stat = "identity") + ggtitle("Top 3 fatalities across years in the U.S.") + labs(x="Events",y="Mean fatalities")
+multiplot(p1, p2,rows=2)
+
+```
+
+Regarding economic consequences, **Tornado** causes property lost most among all events whereas **Hail** damages crops most.  
+The top 3 events causes economic losses are stressed as following:
+
+```{r}
+p3 <- ggplot(head(topPropDmg,n=3),aes(x=reorder(EVTYPE,-sum_propDmg),y=sum_propDmg)) + geom_bar(stat = "identity") + ggtitle("Top 3 property damages") + labs(x="Events",y="Sum property damages")
+p4 <- ggplot(head(topCropDmg,n=3),aes(x=reorder(EVTYPE,-sum_cropDmg),y=sum_cropDmg)) + geom_bar(stat = "identity") + ggtitle("Top 3 crops damages") + labs(x="Events",y="Sum crops fatalities")
+multiplot(p3, p4,rows=2)
+```

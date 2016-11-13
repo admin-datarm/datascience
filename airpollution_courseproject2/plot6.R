@@ -1,12 +1,13 @@
-# Plot5 answering question: Across the United States, how have emissions from coal combustion-related sources changed from 1999–2008?
-
+# Plot6 answering question: Compare emissions from motor vehicle sources in Baltimore City with emissions from motor vehicle sources in Los Angeles County, California (𝚏𝚒𝚙𝚜 == 𝟶𝟼𝟶𝟹𝟽). Which city has seen greater changes over time in motor vehicle emissions?
+library(ggplot2)
+library(dplyr)
 #1. load dataset.
 sccpm25 <- readRDS(file ="../airpollution_courseproject2/summarySCC_PM25.rds")
 scc <- readRDS(file ="../airpollution_courseproject2/Source_Classification_Code.rds")
 #2. Merge the two datase
 full_scc <- merge(sccpm25,scc,by = "SCC")
 #3. sub data set 
-motor_pm25 <- full_scc %>% filter(fips=="24510" | fips=="06037") %>% filter(grepl("([M|m]otor)",Short.Name) & grepl("([V|v]ehicle)",Short.Name)) 
+motor_pm25 <- full_scc %>% filter(fips=="24510" | fips=="06037") %>% filter( grepl("([V|v]ehicle)",EI.Sector)) 
 
 #4.sum PM2.5 by year and type.
 sum_motor_pm25 <- motor_pm25 %>% group_by(year,fips) %>% summarise(Emissions=sum(Emissions))
