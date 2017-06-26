@@ -1,0 +1,106 @@
+---
+title: "Flowers_classification"
+author: "Zhaomingli"
+date: "26/06/2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE,message=TRUE,warning=FALSE,error=FALSE,results=TRUE,eval=FALSE,tidy=TRUE,results='hide'}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read and explore dataset 
+
+### Summary of the dataset:
+```{r}
+flowerDataset <- read.csv("./flowers.csv")
+summary(flowerDataset)
+```
+### Preprocessing dataset
+
+The "root"" feature has 1791 missing values which is not trival relative to the total size of sample, so we must handle these missing values at first.
+```{r  message=FALSE,error=FALSE,warning=FALSE}
+flowerDataset$root[flowerDataset$root=="?"] <- NA
+library(mice)
+library(VIM)
+mice_plot <- aggr(flowerDataset, col=c('green','yellow'),
+                    numbers=TRUE, sortVars=TRUE,
+                    labels=names(flowerDataset), cex.axis=.7,
+                    gap=3, ylab=c("Missing data","Pattern"))
+# imputed data with 50 iterations and predictive mean mathing method.
+imputed_Data <- mice(flowerDataset, maxit = 50, method = 'pmm', seed = 500)
+completeData <- complete(imputed_Data)
+#Check the missing in imputed dataset
+summary(completeData)
+```
+
+Remove the feature which values is identical among observations
+```{r}
+flowerDataset$seed.size <- NULL
+```
+## Train the model
+### Split the sample data into training and testing.
+```{r  message=FALSE,error=FALSE,warning=FALSE}
+library(caret)
+library(caTools) 
+set.seed(101) 
+sample = sample.split(completeData$class, SplitRatio = .7)
+completeDataTrain = subset(completeData, sample == TRUE)
+completeDataTest = subset(completeData, sample == FALSE)
+
+dataTrainClass <- completeDataTrain$class
+dataTestClass <- completeDataTest$class
+completeDataTrain$class<-NULL
+completeDataTest$class<-NULL
+
+#create cross validation folds 
+crossValidationFolds<-createMultiFolds(dataTrainClass,k=5,times=1)
+#create fold object
+trainControlObject<-trainControl(method="repeatedcv",number=5,repeats=1,index=crossValidationFolds)
+```
+
+### Train a random forest modle
+```{r  message=FALSE,error=FALSE,warning=FALSE}
+
+rfModel<-train(x=completeDataTrain,y=dataTrainClass,method="rf",trControl=trainControlObject,tuneLength=3)
+plot(varImp(rfModel),main="Random Forest - Variable Importance")
+
+rfPredicted<-predict(rfModel,completeDataTest)
+
+rfTestCompare<-data.frame(orignal=dataTestClass,predicted=rfPredicted)
+
+confusionMatrix(table(rfTestCompare$orignal,rfTestCompare$predicted)) 
+
+```
+
+
+### Train a logistic regression model
+```{r message=FALSE,error=FALSE,warning=FALSE}
+#Reset trainset
+completeDataTrain = subset(completeData, sample == TRUE)
+#Using three important features (from RF) 
+lrModel <- train(class ~ scent + seed.dispersal + stem.surface.primary + fruit.size + stem.surface.secondary + fruit.color,  data=completeDataTrain, method="glm", family="binomial",
+                 trControl = trainControlObject, tuneLength = 5)
+predictor = predict(lrModel, newdata=completeDataTest)
+confusionMatrix(data=predictor, dataTestClass)
+```
+
+## Prediction
+```{r  message=FALSE,error=FALSE,warning=FALSE}
+toPredictFlowerDatasetOrig <- read.csv("./flowers_classify.csv")
+toPredictFlowerDataset <- toPredictFlowerDatasetOrig
+toPredictFlowerDataset$root[toPredictFlowerDataset$root=="?"] <- NA
+toPredictFlowerDataset$seed.size <- NULL
+#Handel missing value
+toPredictFlowerDatasetImputed <- mice(toPredictFlowerDataset, maxit = 50, method = 'pmm', seed = 500)
+toPredictFlowerDataset <- complete(toPredictFlowerDatasetImputed)
+summary(toPredictFlowerDataset)
+resultRFPredicted<- predict(lrModel, newdata=toPredictFlowerDataset)
+toPredictFlowerDatasetOrig$class <- resultRFPredicted
+summary(toPredictFlowerDatasetOrig)
+write.csv(toPredictFlowerDatasetOrig,file="./flowers_result.csv",row.names=FALSE)
+```
+## Conclusion
+scent is the most indicative of an poisinous flower. There are 331 edible and 409 poisonous flowers.
