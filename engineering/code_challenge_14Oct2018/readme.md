@@ -1,4 +1,4 @@
-##Code Challenge Document
+## Code Challenge Document
 
 Date: Oct 14, 2018
 
